@@ -12,7 +12,7 @@ from ml.risk_model import predict_risk
 
 app = Flask(__name__)
 
-DATABASE = "kerasuraksha.db"
+DATABASE = os.environ.get("DATABASE_PATH", "kerasuraksha.db")
 RISK_FILE = os.path.join("data", "risk_zones.csv")
 SHELTER_FILE = os.path.join("data", "shelters.csv")
 
@@ -20,9 +20,7 @@ app.secret_key = "KERASURAKSHA-DEVELOPMENT-SECRET-KEY"
 
 ADMIN_USERNAME = "admin"
 ADMIN_PASSWORD = "KERA@12345"
-
-
-# ============================================================
+#==================================
 # ADMIN PROTECTION
 # ============================================================
 
@@ -82,6 +80,10 @@ def init_database():
     connection.commit()
     connection.close()
 
+
+# Initialize database when the application is imported by Gunicorn/Render
+# and when it is run locally. CREATE TABLE IF NOT EXISTS makes this safe.
+init_database()
 
 # ============================================================
 # LOAD RISK ZONES
@@ -1167,8 +1169,6 @@ def admin_logout():
 # ============================================================
 
 if __name__ == "__main__":
-
-    init_database()
 
     print()
     print("========================================")
