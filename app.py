@@ -1,5 +1,4 @@
 from flask import Flask, render_template, request, jsonify, redirect, url_for, session
-import sqlite3
 import csv
 import os
 import math
@@ -12,7 +11,9 @@ from ml.risk_model import predict_risk
 
 app = Flask(__name__)
 
-DATABASE = os.environ.get("DATABASE_PATH", "kerasuraksha.db")
+SUPABASE_URL = os.environ.get("SUPABASE_URL", "").rstrip("/")
+SUPABASE_SECRET_KEY = os.environ.get("SUPABASE_SECRET_KEY", "")
+
 RISK_FILE = os.path.join("data", "risk_zones.csv")
 SHELTER_FILE = os.path.join("data", "shelters.csv")
 
@@ -20,7 +21,9 @@ app.secret_key = "KERASURAKSHA-DEVELOPMENT-SECRET-KEY"
 
 ADMIN_USERNAME = "admin"
 ADMIN_PASSWORD = "KERA@12345"
-#==================================
+
+
+# ============================================================
 # ADMIN PROTECTION
 # ============================================================
 
@@ -38,52 +41,104 @@ def admin_required(function):
 
 
 # ============================================================
-# DATABASE
+# SUPABASE DATABASE
 # ============================================================
 
-def init_database():
+def _supabase_headers(prefer=None):
 
-    connection = sqlite3.connect(DATABASE)
-
-    connection.execute("""
-        CREATE TABLE IF NOT EXISTS sos_requests (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
-            phone TEXT NOT NULL,
-            people INTEGER NOT NULL,
-            medical TEXT NOT NULL,
-            children INTEGER NOT NULL,
-            elderly INTEGER NOT NULL,
-            latitude TEXT,
-            longitude TEXT,
-            situation TEXT,
-            created_at TEXT NOT NULL
+    if not SUPABASE_URL or not SUPABASE_SECRET_KEY:
+        raise RuntimeError(
+            "Supabase is not configured. "
+            "Add SUPABASE_URL and SUPABASE_SECRET_KEY "
+            "to Render Environment Variables."
         )
-    """)
 
-    columns = connection.execute(
-        "PRAGMA table_info(sos_requests)"
-    ).fetchall()
+    headers = {
+        "apikey": SUPABASE_SECRET_KEY,
+        "Content-Type": "application/json"
+    }
 
-    column_names = [
-        column[1]
-        for column in columns
-    ]
+    if prefer:
+        headers["Prefer"] = prefer
 
-    if "status" not in column_names:
-
-        connection.execute("""
-            ALTER TABLE sos_requests
-            ADD COLUMN status TEXT DEFAULT 'NEW'
-        """)
-
-    connection.commit()
-    connection.close()
+    return headers
 
 
-# Initialize database when the application is imported by Gunicorn/Render
-# and when it is run locally. CREATE TABLE IF NOT EXISTS makes this safe.
-init_database()
+def _sos_table_url():
+
+    return f"{SUPABASE_URL}/rest/v1/sos_requests"
+
+
+def get_sos_requests():
+
+    response = requests.get(
+        _sos_table_url(),
+        headers=_supabase_headers(),
+        params={
+            "select": "*",
+            "order": "id.desc"
+        },
+        timeout=15
+    )
+
+    response.raise_for_status()
+
+    return response.json()
+
+
+def insert_sos_request(data):
+
+    response = requests.post(
+        _sos_table_url(),
+        headers=_supabase_headers(
+            "return=minimal"
+        ),
+        json=data,
+        timeout=15
+    )
+
+    response.raise_for_status()
+
+
+def update_sos_status(
+    request_id,
+    status
+):
+
+    response = requests.patch(
+        _sos_table_url(),
+        headers=_supabase_headers(
+            "return=minimal"
+        ),
+        params={
+            "id": f"eq.{request_id}"
+        },
+        json={
+            "status": status
+        },
+        timeout=15
+    )
+
+    response.raise_for_status()
+
+
+def delete_sos_request(
+    request_id
+):
+
+    response = requests.delete(
+        _sos_table_url(),
+        headers=_supabase_headers(
+            "return=minimal"
+        ),
+        params={
+            "id": f"eq.{request_id}"
+        },
+        timeout=15
+    )
+
+    response.raise_for_status()
+
 
 # ============================================================
 # LOAD RISK ZONES
@@ -209,42 +264,18 @@ def sos():
 
         situation = request.form["situation"]
 
-        connection = sqlite3.connect(DATABASE)
-
-        connection.execute("""
-            INSERT INTO sos_requests
-            (
-                name,
-                phone,
-                people,
-                medical,
-                children,
-                elderly,
-                latitude,
-                longitude,
-                situation,
-                created_at,
-                status
-            )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (
-            name,
-            phone,
-            people,
-            medical,
-            children,
-            elderly,
-            latitude,
-            longitude,
-            situation,
-            datetime.now().strftime(
-                "%Y-%m-%d %H:%M:%S"
-            ),
-            "NEW"
-        ))
-
-        connection.commit()
-        connection.close()
+        insert_sos_request({
+            "name": name,
+            "phone": phone,
+            "people": people,
+            "medical": medical,
+            "children": children,
+            "elderly": elderly,
+            "latitude": latitude,
+            "longitude": longitude,
+            "situation": situation,
+            "status": "NEW"
+        })
 
         return render_template(
             "success.html"
@@ -260,38 +291,28 @@ def sos():
 @app.route("/dashboard")
 def dashboard():
 
-    connection = sqlite3.connect(DATABASE)
-    connection.row_factory = sqlite3.Row
+    sos_requests = get_sos_requests()
 
-    requests = connection.execute("""
-        SELECT *
-        FROM sos_requests
-        ORDER BY id DESC
-    """).fetchall()
+    total_requests = len(sos_requests)
 
-    total_requests = connection.execute("""
-        SELECT COUNT(*)
-        FROM sos_requests
-    """).fetchone()[0]
+    total_people = sum(
+        int(item.get("people") or 0)
+        for item in sos_requests
+    )
 
-    total_people = connection.execute("""
-        SELECT COALESCE(SUM(people), 0)
-        FROM sos_requests
-    """).fetchone()[0]
-
-    medical_cases = connection.execute("""
-        SELECT COUNT(*)
-        FROM sos_requests
-        WHERE medical = 'Yes'
-    """).fetchone()[0]
-
-    connection.close()
+    medical_cases = sum(
+        1
+        for item in sos_requests
+        if str(
+            item.get("medical", "")
+        ).strip().lower() == "yes"
+    )
 
     risk_zones = load_risk_zones()
 
     return render_template(
         "dashboard.html",
-        requests=requests,
+        requests=sos_requests,
         total_requests=total_requests,
         total_people=total_people,
         medical_cases=medical_cases,
@@ -306,49 +327,9 @@ def dashboard():
 @app.route("/api/sos")
 def api_sos():
 
-    connection = sqlite3.connect(DATABASE)
-    connection.row_factory = sqlite3.Row
-
-    rows = connection.execute("""
-        SELECT
-            id,
-            name,
-            phone,
-            people,
-            medical,
-            children,
-            elderly,
-            latitude,
-            longitude,
-            situation,
-            created_at,
-            status
-        FROM sos_requests
-        ORDER BY id DESC
-    """).fetchall()
-
-    connection.close()
-
-    data = []
-
-    for row in rows:
-
-        data.append({
-            "id": row["id"],
-            "name": row["name"],
-            "phone": row["phone"],
-            "people": row["people"],
-            "medical": row["medical"],
-            "children": row["children"],
-            "elderly": row["elderly"],
-            "latitude": row["latitude"],
-            "longitude": row["longitude"],
-            "situation": row["situation"],
-            "created_at": row["created_at"],
-            "status": row["status"]
-        })
-
-    return jsonify(data)
+    return jsonify(
+        get_sos_requests()
+    )
 
 
 # ============================================================
@@ -1050,23 +1031,11 @@ def admin_login():
 @admin_required
 def admin_dashboard():
 
-    connection = sqlite3.connect(
-        DATABASE
-    )
-
-    connection.row_factory = sqlite3.Row
-
-    requests = connection.execute("""
-        SELECT *
-        FROM sos_requests
-        ORDER BY id DESC
-    """).fetchall()
-
-    connection.close()
+    sos_requests = get_sos_requests()
 
     return render_template(
         "admin_dashboard.html",
-        requests=requests
+        requests=sos_requests
     )
 
 
@@ -1097,21 +1066,10 @@ def update_status(
             400
         )
 
-    connection = sqlite3.connect(
-        DATABASE
+    update_sos_status(
+        request_id,
+        status
     )
-
-    connection.execute("""
-        UPDATE sos_requests
-        SET status = ?
-        WHERE id = ?
-    """, (
-        status,
-        request_id
-    ))
-
-    connection.commit()
-    connection.close()
 
     return redirect(
         url_for("admin_dashboard")
@@ -1131,19 +1089,9 @@ def delete_request(
     request_id
 ):
 
-    connection = sqlite3.connect(
-        DATABASE
+    delete_sos_request(
+        request_id
     )
-
-    connection.execute("""
-        DELETE FROM sos_requests
-        WHERE id = ?
-    """, (
-        request_id,
-    ))
-
-    connection.commit()
-    connection.close()
 
     return redirect(
         url_for("admin_dashboard")
