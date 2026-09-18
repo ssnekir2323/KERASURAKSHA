@@ -1,0 +1,15 @@
+district,latitude,longitude,risk_level,risk_score
+Thiruvananthapuram,8.5241,76.9366,Moderate,45
+Kollam,8.8932,76.6141,High,72
+Pathanamthitta,9.2648,76.7870,High,68
+Alappuzha,9.4981,76.3388,Critical,88
+Kottayam,9.5916,76.5222,Moderate,42
+Idukki,9.9189,76.9496,Critical,91
+Ernakulam,9.9816,76.2999,High,74
+Thrissur,10.5276,76.2144,Moderate,48
+Palakkad,10.7867,76.6548,High,70
+Malappuram,11.0510,76.0711,Moderate,46
+Kozhikode,11.2588,75.7804,High,67
+Wayanad,11.6854,76.1320,Critical,86
+Kannur,11.8745,75.3704,Moderate,44
+Kasaragod,12.4996,74.9869,Low,25

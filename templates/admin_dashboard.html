@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <title>KERASURAKSHA Admin Control</title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background: #060d18;
+            color: white;
+            font-family: Arial, sans-serif;
+        }
+
+        header {
+            background: #0d1929;
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #20334d;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+
+        .logout {
+            background: #7d1d2b;
+            color: white;
+            text-decoration: none;
+            padding: 10px 15px;
+            border-radius: 8px;
+        }
+
+        .container {
+            padding: 25px;
+            max-width: 1400px;
+            margin: auto;
+        }
+
+        .notice {
+            background: #10253b;
+            padding: 18px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            border-left: 4px solid #1677ff;
+        }
+
+        .request {
+            background: #0d1929;
+            border: 1px solid #20334d;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 18px;
+        }
+
+        .request-top {
+            display: flex;
+            justify-content: space-between;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .request-id {
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .status {
+            padding: 7px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        .new {
+            background: #653d0b;
+            color: #ffd88a;
+        }
+
+        .underway {
+            background: #123e69;
+            color: #8dc8ff;
+        }
+
+        .resolved {
+            background: #124b2b;
+            color: #8cffb2;
+        }
+
+        .details {
+            margin-top: 15px;
+            line-height: 1.7;
+            color: #c5d2e2;
+        }
+
+        .buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 18px;
+        }
+
+        button {
+            border: none;
+            border-radius: 8px;
+            padding: 11px 15px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .rescue {
+            background: #1677ff;
+        }
+
+        .resolved-button {
+            background: #168744;
+        }
+
+        .delete {
+            background: #9d2435;
+        }
+
+        .map-link {
+            color: #75b5ff;
+        }
+
+        .empty {
+            text-align: center;
+            padding: 60px;
+            color: #8292a8;
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<header>
+
+    <h1>🛡️ KERASURAKSHA ADMIN CONTROL</h1>
+
+    <a
+        class="logout"
+        href="/admin/logout"
+    >
+        Logout
+    </a>
+
+</header>
+
+
+<div class="container">
+
+    <div class="notice">
+
+        <strong>🚨 Emergency Control Center</strong>
+
+        <br>
+
+        Administrators can update rescue status and remove SOS requests.
+
+    </div>
+
+
+    {% if requests %}
+
+        {% for r in requests %}
+
+            <div class="request">
+
+                <div class="request-top">
+
+                    <div class="request-id">
+                        🆘 SOS #{{ r["id"] }}
+                    </div>
+
+                    {% if r["status"] == "NEW" %}
+
+                        <div class="status new">
+                            NEW
+                        </div>
+
+                    {% elif r["status"] == "RESCUE UNDERWAY" %}
+
+                        <div class="status underway">
+                            🚑 RESCUE UNDERWAY
+                        </div>
+
+                    {% else %}
+
+                        <div class="status resolved">
+                            ✅ RESOLVED
+                        </div>
+
+                    {% endif %}
+
+                </div>
+
+
+                <div class="details">
+
+                    <strong>Name:</strong>
+                    {{ r["name"] }}
+
+                    <br>
+
+                    <strong>Phone:</strong>
+                    {{ r["phone"] }}
+
+                    <br>
+
+                    <strong>People:</strong>
+                    {{ r["people"] }}
+
+                    <br>
+
+                    <strong>Medical:</strong>
+                    {{ r["medical"] }}
+
+                    <br>
+
+                    <strong>Children:</strong>
+                    {{ r["children"] }}
+
+                    <br>
+
+                    <strong>Elderly:</strong>
+                    {{ r["elderly"] }}
+
+                    <br>
+
+                    <strong>Situation:</strong>
+                    {{ r["situation"] }}
+
+                    <br>
+
+                    <strong>Received:</strong>
+                    {{ r["created_at"] }}
+
+                    {% if r["latitude"] and r["longitude"] %}
+
+                        <br>
+
+                        <strong>Location:</strong>
+
+                        <a
+                            class="map-link"
+                            href="https://www.google.com/maps?q={{ r['latitude'] }},{{ r['longitude'] }}"
+                            target="_blank"
+                        >
+                            📍 Open Location
+                        </a>
+
+                    {% endif %}
+
+                </div>
+
+
+                <div class="buttons">
+
+                    <form
+                        method="POST"
+                        action="/admin/status/{{ r['id'] }}/RESCUE%20UNDERWAY"
+                    >
+
+                        <button
+                            class="rescue"
+                            type="submit"
+                        >
+                            🚑 RESCUE UNDERWAY
+                        </button>
+
+                    </form>
+
+
+                    <form
+                        method="POST"
+                        action="/admin/status/{{ r['id'] }}/RESOLVED"
+                    >
+
+                        <button
+                            class="resolved-button"
+                            type="submit"
+                        >
+                            ✅ MARK RESOLVED
+                        </button>
+
+                    </form>
+
+
+                    <form
+                        method="POST"
+                        action="/admin/delete/{{ r['id'] }}"
+                        onsubmit="return confirm('Delete this SOS request?');"
+                    >
+
+                        <button
+                            class="delete"
+                            type="submit"
+                        >
+                            🗑️ DELETE
+                        </button>
+
+                    </form>
+
+                </div>
+
+            </div>
+
+        {% endfor %}
+
+    {% else %}
+
+        <div class="empty">
+            No SOS requests found.
+        </div>
+
+    {% endif %}
+
+</div>
+
+</body>
+
+</html>

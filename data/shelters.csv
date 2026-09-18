@@ -1,0 +1,9 @@
+id,name,district,latitude,longitude,capacity,occupied,status
+1,Government Higher Secondary School,Kollam,8.8932,76.6141,200,83,OPEN
+2,Community Relief Centre,Alappuzha,9.4981,76.3388,150,150,FULL
+3,Government School,Pathanamthitta,9.2648,76.7870,180,65,OPEN
+4,Relief Camp,Kottayam,9.5916,76.5222,120,45,OPEN
+5,Government College,Idukki,9.9189,76.9496,250,210,OPEN
+6,Community Hall,Ernakulam,9.9816,76.2999,100,100,FULL
+7,Relief Centre,Wayanad,11.6854,76.1320,300,125,OPEN
+8,Government School,Kozhikode,11.2588,75.7804,180,72,OPEN

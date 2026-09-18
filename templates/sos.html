@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+    <title>KERASURAKSHA - Emergency SOS</title>
+
+    <style>
+
+        body {
+            font-family: Arial;
+            background: #f1f5f9;
+            margin: 0;
+            padding: 30px;
+        }
+
+        .container {
+            max-width: 700px;
+            margin: auto;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            color: #b91c1c;
+        }
+
+        label {
+            display: block;
+            margin-top: 15px;
+            font-weight: bold;
+        }
+
+        input,
+        select,
+        textarea {
+            width: 100%;
+            padding: 12px;
+            margin-top: 5px;
+            border: 1px solid #ccc;
+            border-radius: 7px;
+            box-sizing: border-box;
+        }
+
+        textarea {
+            height: 100px;
+        }
+
+        button {
+            margin-top: 25px;
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 8px;
+            background: #dc2626;
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+        }
+
+        .location {
+            margin-top: 15px;
+            padding: 12px;
+            background: #e0f2fe;
+            border-radius: 7px;
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>🆘 Emergency SOS</h1>
+
+    <p>
+        Submit an emergency request to the KERASURAKSHA system.
+    </p>
+
+    <form method="POST">
+
+        <label>Your Name</label>
+        <input type="text" name="name" required>
+
+        <label>Phone Number</label>
+        <input type="tel" name="phone" required>
+
+        <label>Number of People</label>
+        <input type="number" name="people" min="1" required>
+
+        <label>Medical Emergency?</label>
+        <select name="medical">
+            <option value="No">No</option>
+            <option value="Yes">Yes</option>
+        </select>
+
+        <label>Number of Children</label>
+        <input type="number" name="children" min="0" value="0">
+
+        <label>Number of Elderly People</label>
+        <input type="number" name="elderly" min="0" value="0">
+
+        <label>Current Situation</label>
+        <textarea
+            name="situation"
+            placeholder="Describe the emergency..."
+            required
+        ></textarea>
+
+        <input type="hidden" name="latitude" id="latitude">
+        <input type="hidden" name="longitude" id="longitude">
+
+        <div class="location">
+            📍 <strong>GPS:</strong>
+            <span id="locationStatus">Getting location...</span>
+        </div>
+
+        <button type="submit">
+            🆘 SEND EMERGENCY REQUEST
+        </button>
+
+    </form>
+
+</div>
+
+<script>
+
+    if (navigator.geolocation) {
+
+        navigator.geolocation.getCurrentPosition(
+
+            function(position) {
+
+                document.getElementById("latitude").value =
+                    position.coords.latitude;
+
+                document.getElementById("longitude").value =
+                    position.coords.longitude;
+
+                document.getElementById("locationStatus").innerText =
+                    "Location captured ✓";
+
+            },
+
+            function(error) {
+
+                document.getElementById("locationStatus").innerText =
+                    "Location permission was not provided";
+
+            }
+
+        );
+
+    } else {
+
+        document.getElementById("locationStatus").innerText =
+            "GPS is not supported by this browser";
+
+    }
+
+</script>
+
+</body>
+</html>

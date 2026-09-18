@@ -1,0 +1,2955 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KERASURAKSHA Rescue Command Center</title>
+
+    <link rel="stylesheet"
+          href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background: #07111f;
+            color: #fff;
+            font-family: Arial, sans-serif;
+        }
+
+        header {
+            background: #0d1b2e;
+            border-bottom: 1px solid #233752;
+            padding: 18px 28px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .button,
+        .admin-button {
+            display: inline-block;
+            text-decoration: none;
+            border: 0;
+            cursor: pointer;
+            color: white;
+            background: #1677ff;
+            padding: 11px 16px;
+            border-radius: 9px;
+            font-weight: bold;
+        }
+
+        .button.secondary {
+            background: #182a40;
+        }
+
+        .button.danger {
+            background: #8b2430;
+        }
+
+        .container {
+            max-width: 1550px;
+            margin: auto;
+            padding: 24px;
+        }
+
+        .section-title {
+            margin: 28px 0 14px;
+            font-size: 22px;
+        }
+
+        .grid {
+            display: grid;
+            gap: 18px;
+        }
+
+        .stats {
+            grid-template-columns: repeat(5, 1fr);
+            margin-bottom: 22px;
+        }
+
+        .stat,
+        .panel,
+        .request,
+        .shelter,
+        .team {
+            background: #0d1b2e;
+            border: 1px solid #233752;
+            border-radius: 15px;
+        }
+
+        .stat {
+            padding: 20px;
+        }
+
+        .stat-title {
+            color: #94a7bd;
+            font-size: 13px;
+        }
+
+        .stat-number {
+            font-size: 32px;
+            font-weight: bold;
+            margin-top: 8px;
+        }
+
+        .critical-stat {
+            border-color: #8e3038;
+        }
+
+        .panel {
+            padding: 22px;
+            margin-bottom: 22px;
+        }
+
+        .panel h2 {
+            margin: 0 0 8px;
+        }
+
+        .muted {
+            color: #91a4bb;
+            line-height: 1.5;
+        }
+
+        /* WARNING */
+
+        .warning {
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 22px;
+            border: 1px solid #42516a;
+            background: #102036;
+        }
+
+        .warning.low {
+            border-color: #216f4b;
+        }
+
+        .warning.moderate {
+            border-color: #8a7b19;
+        }
+
+        .warning.high {
+            border-color: #a65f16;
+        }
+
+        .warning.critical {
+            border-color: #9b303a;
+        }
+
+        .warning-top {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .warning-level {
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 7px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .badge-low {
+            background: #0c4b2a;
+            color: #6dffad;
+        }
+
+        .badge-moderate {
+            background: #5b5008;
+            color: #fff06a;
+        }
+
+        .badge-high {
+            background: #5b3908;
+            color: #ffc65c;
+        }
+
+        .badge-critical {
+            background: #641d25;
+            color: #ff8f99;
+        }
+
+        .badge-new {
+            background: #5b3908;
+            color: #ffc65c;
+        }
+
+        .badge-underway {
+            background: #103d69;
+            color: #73bcff;
+        }
+
+        .badge-resolved {
+            background: #0c4b2a;
+            color: #6dffad;
+        }
+
+        .warning-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-top: 15px;
+        }
+
+        .mini {
+            background: #101f32;
+            border: 1px solid #263d59;
+            border-radius: 10px;
+            padding: 13px;
+        }
+
+        .mini small {
+            display: block;
+            color: #8194ab;
+            margin-bottom: 5px;
+        }
+
+        /* AI */
+
+        .ai-form {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 13px;
+        }
+
+        .input-group label {
+            display: block;
+            color: #b9c7d8;
+            font-size: 13px;
+            margin-bottom: 7px;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #2b405d;
+            border-radius: 8px;
+            background: #182a40;
+            color: white;
+        }
+
+        .ai-result {
+            display: none;
+            margin-top: 18px;
+            background: #101f32;
+            border: 1px solid #304763;
+            border-radius: 12px;
+            padding: 18px;
+        }
+
+        .ai-score {
+            font-size: 38px;
+            font-weight: bold;
+        }
+
+        .prototype-note {
+            color: #8193aa;
+            font-size: 12px;
+            margin-top: 15px;
+        }
+
+        /* MAP */
+
+        #kerala-map {
+            height: 510px;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 14px;
+            color: #b7c5d6;
+        }
+
+        .dot {
+            width: 12px;
+            height: 12px;
+            display: inline-block;
+            border-radius: 50%;
+            margin-right: 6px;
+        }
+
+        .red {
+            background: #ff3030;
+        }
+
+        .orange {
+            background: #ff9d00;
+        }
+
+        .blue {
+            background: #1687ff;
+        }
+
+        .green {
+            background: #20c76b;
+        }
+
+        .yellow {
+            background: #ffd21f;
+        }
+
+        /* TABLE/CARDS */
+
+        .two-col {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .list {
+            display: grid;
+            gap: 12px;
+        }
+
+        .shelter,
+        .team {
+            padding: 17px;
+        }
+
+        .card-head,
+        .request-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .details {
+            margin-top: 12px;
+            color: #c0cede;
+            line-height: 1.65;
+        }
+
+        .capacity-bar {
+            height: 9px;
+            background: #182a40;
+            border-radius: 20px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .capacity-fill {
+            height: 100%;
+            background: #1677ff;
+        }
+
+        .actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 13px;
+        }
+
+        .small-btn {
+            display: inline-block;
+            padding: 8px 11px;
+            border-radius: 8px;
+            background: #182a40;
+            color: #fff;
+            text-decoration: none;
+            border: 1px solid #2a405c;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .small-btn.primary {
+            background: #1677ff;
+            border-color: #1677ff;
+        }
+
+        /* REQUESTS */
+
+        .request {
+            padding: 19px;
+            margin-bottom: 12px;
+            border-left: 5px solid #ff9d00;
+        }
+
+        .request.underway {
+            border-left-color: #1687ff;
+        }
+
+        .request.resolved {
+            border-left-color: #20c76b;
+        }
+
+        .priority {
+            font-weight: bold;
+            padding: 7px 11px;
+            border-radius: 20px;
+            font-size: 12px;
+        }
+
+        .priority-critical {
+            background: #641d25;
+            color: #ff8f99;
+        }
+
+        .priority-high {
+            background: #5b3908;
+            color: #ffc65c;
+        }
+
+        .priority-moderate {
+            background: #5b5008;
+            color: #fff06a;
+        }
+
+        .priority-low {
+            background: #0c4b2a;
+            color: #6dffad;
+        }
+
+        .priority-loading {
+            background: #25364c;
+            color: #9db0c6;
+        }
+
+        .empty {
+            background: #101f32;
+            border: 1px dashed #304763;
+            padding: 28px;
+            text-align: center;
+            border-radius: 12px;
+            color: #899bb0;
+        }
+
+        .footer-note {
+            text-align: center;
+            color: #71849b;
+            font-size: 12px;
+            padding: 25px 0 10px;
+        }
+
+        /* ========================================================
+           SOS WEATHER
+           ======================================================== */
+
+        .weather-card {
+            margin-top: 14px;
+            padding: 16px;
+            background: #101f32;
+            border: 1px solid #304763;
+            border-radius: 12px;
+        }
+
+        .weather-title {
+            font-size: 15px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .weather-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+
+        .weather-item {
+            background: #182a40;
+            border-radius: 9px;
+            padding: 10px;
+        }
+
+        .weather-item small {
+            display: block;
+            color: #8194ab;
+            margin-bottom: 5px;
+        }
+
+        .weather-condition {
+            margin-top: 10px;
+            color: #bcd0e5;
+        }
+
+        .weather-updated {
+            color: #71849b;
+            font-size: 11px;
+            margin-left: 5px;
+        }
+
+        @media (max-width: 1100px) {
+
+            .stats {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .ai-form {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .warning-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .two-col {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 700px) {
+
+            .container {
+                padding: 14px;
+            }
+
+            header {
+                padding: 16px;
+            }
+
+            header h1 {
+                font-size: 19px;
+            }
+
+            .stats {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .ai-form,
+            .warning-grid,
+            .weather-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            #kerala-map {
+                height: 390px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+
+    <h1>🚑 KERASURAKSHA RESCUE COMMAND CENTER</h1>
+
+    <div class="header-actions">
+
+        <a href="/sos"
+           class="button danger">
+            🆘 SOS
+        </a>
+
+        <a href="/admin"
+           class="admin-button">
+            🛡️ ADMIN CONTROL
+        </a>
+
+    </div>
+
+</header>
+
+
+<div class="container">
+
+    <!-- ========================================================
+         STATS
+         ======================================================== -->
+
+    <div class="grid stats">
+
+        <div class="stat">
+
+            <div class="stat-title">
+                TOTAL SOS REQUESTS
+            </div>
+
+            <div class="stat-number">
+                {{ total_requests }}
+            </div>
+
+        </div>
+
+
+        <div class="stat">
+
+            <div class="stat-title">
+                PEOPLE AFFECTED
+            </div>
+
+            <div class="stat-number">
+                {{ total_people }}
+            </div>
+
+        </div>
+
+
+        <div class="stat">
+
+            <div class="stat-title">
+                MEDICAL CASES
+            </div>
+
+            <div class="stat-number">
+                {{ medical_cases }}
+            </div>
+
+        </div>
+
+
+        <div class="stat critical-stat">
+
+            <div class="stat-title">
+                CRITICAL PRIORITIES
+            </div>
+
+            <div class="stat-number"
+                 id="critical-count">
+                --
+            </div>
+
+        </div>
+
+
+        <div class="stat">
+
+            <div class="stat-title">
+                ACTIVE WARNINGS
+            </div>
+
+            <div class="stat-number"
+                 id="warning-count">
+                --
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ========================================================
+         EARLY WARNING
+         ======================================================== -->
+
+    <h2 class="section-title">
+        🌧️ Early Warning & Situation Monitor
+    </h2>
+
+    <div id="warning-panel"
+         class="warning">
+
+        <div class="warning-top">
+
+            <div>
+
+                <div class="warning-level"
+                     id="warning-title">
+                    Loading warning status...
+                </div>
+
+                <div class="muted"
+                     id="warning-message">
+                    Connecting to KERASURAKSHA warning engine.
+                </div>
+
+            </div>
+
+            <span id="warning-badge"
+                  class="badge badge-moderate">
+                CHECKING
+            </span>
+
+        </div>
+
+
+        <div class="warning-grid">
+
+            <div class="mini">
+
+                <small>
+                    Rainfall
+                </small>
+
+                <b id="warning-rainfall">
+                    --
+                </b>
+
+            </div>
+
+
+            <div class="mini">
+
+                <small>
+                    Risk Score
+                </small>
+
+                <b id="warning-risk">
+                    --
+                </b>
+
+            </div>
+
+
+            <div class="mini">
+
+                <small>
+                    Situation
+                </small>
+
+                <b id="warning-situation">
+                    --
+                </b>
+
+            </div>
+
+
+            <div class="mini">
+
+                <small>
+                    Data Source
+                </small>
+
+                <b id="warning-source">
+                    Prototype
+                </b>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ========================================================
+         AI RISK
+         ======================================================== -->
+
+    <div class="panel">
+
+        <h2>
+            🤖 AI Disaster Risk Prediction
+        </h2>
+
+        <p class="muted">
+
+            Enter environmental conditions and let the
+            KERASURAKSHA AI model estimate a prototype
+            disaster-risk score.
+
+        </p>
+
+
+        <div class="ai-form">
+
+            <div class="input-group">
+
+                <label>
+                    🌧️ Rainfall (mm)
+                </label>
+
+                <input
+                    id="rainfall"
+                    type="number"
+                    value="250"
+                    min="0"
+                    step="0.1">
+
+            </div>
+
+
+            <div class="input-group">
+
+                <label>
+                    ⛰️ Elevation (m)
+                </label>
+
+                <input
+                    id="elevation"
+                    type="number"
+                    value="50"
+                    min="0"
+                    step="0.1">
+
+            </div>
+
+
+            <div class="input-group">
+
+                <label>
+                    📐 Slope (degrees)
+                </label>
+
+                <input
+                    id="slope"
+                    type="number"
+                    value="18"
+                    min="0"
+                    step="0.1">
+
+            </div>
+
+
+            <div class="input-group">
+
+                <label>
+                    🌊 River Distance (km)
+                </label>
+
+                <input
+                    id="river-distance"
+                    type="number"
+                    value="1.5"
+                    min="0"
+                    step="0.1">
+
+            </div>
+
+
+            <div class="input-group">
+
+                <label>
+                    📚 Historical Risk (0–100)
+                </label>
+
+                <input
+                    id="historical-risk"
+                    type="number"
+                    value="70"
+                    min="0"
+                    max="100"
+                    step="0.1">
+
+            </div>
+
+        </div>
+
+
+        <button class="button"
+                type="button"
+                onclick="predictRisk()">
+
+            🔮 PREDICT RISK
+
+        </button>
+
+
+        <div id="ai-result"
+             class="ai-result">
+
+            <div class="muted">
+                AI PREDICTION RESULT
+            </div>
+
+            <div id="ai-score"
+                 class="ai-score">
+                --
+            </div>
+
+            <span id="ai-level"
+                  class="badge badge-moderate">
+                --
+            </span>
+
+        </div>
+
+
+        <div id="ai-error"
+             class="muted"
+             style="display:none;margin-top:12px;">
+        </div>
+
+
+        <div class="prototype-note">
+
+            ⚠️ Prototype only: current training data is synthetic
+            and must not be used as an official emergency warning system.
+
+        </div>
+
+    </div>
+
+
+    <!-- ========================================================
+         MAP
+         ======================================================== -->
+
+    <div class="panel">
+
+        <h2>
+            🗺️ Kerala Emergency, Risk & Response Map
+        </h2>
+
+        <div id="kerala-map"></div>
+
+
+        <div class="legend">
+
+            <span>
+                <span class="dot red"></span>
+                Critical Risk
+            </span>
+
+            <span>
+                <span class="dot yellow"></span>
+                Moderate Risk
+            </span>
+
+            <span>
+                <span class="dot orange"></span>
+                New SOS
+            </span>
+
+            <span>
+                <span class="dot blue"></span>
+                Rescue Underway
+            </span>
+
+            <span>
+                <span class="dot green"></span>
+                Resolved
+            </span>
+
+        </div>
+
+    </div>
+
+
+    <!-- ========================================================
+         SHELTERS + TEAMS
+         ======================================================== -->
+
+    <div class="grid two-col">
+
+
+        <div class="panel">
+
+            <h2>
+                🏠 Relief Shelters
+            </h2>
+
+            <p class="muted">
+                Current prototype shelter capacity and availability.
+            </p>
+
+            <div id="shelter-list"
+                 class="list">
+
+                <div class="empty">
+                    Loading shelters...
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="panel">
+
+            <h2>
+                🚑 Rescue Teams
+            </h2>
+
+            <p class="muted">
+                Available teams and current assignments.
+            </p>
+
+            <div id="team-list"
+                 class="list">
+
+                <div class="empty">
+                    Loading rescue teams...
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ========================================================
+         SOS REQUESTS
+         ======================================================== -->
+
+    <h2 class="section-title">
+        🆘 Emergency Requests & AI Priority
+    </h2>
+
+
+    <div id="request-list">
+
+        {% if requests %}
+
+            {% for r in requests %}
+
+                <div
+                    class="request
+                    {% if r['status'] == 'RESOLVED' %}
+                        resolved
+                    {% elif r['status'] == 'RESCUE UNDERWAY' %}
+                        underway
+                    {% endif %}"
+                    id="request-{{ r['id'] }}">
+
+
+                    <div class="request-header">
+
+                        <div class="card-title">
+
+                            🆘 SOS #{{ r['id'] }}
+
+                        </div>
+
+
+                        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+
+                            {% if r['status'] == 'RESOLVED' %}
+
+                                <span class="badge badge-resolved">
+                                    🟢 RESOLVED
+                                </span>
+
+                            {% elif r['status'] == 'RESCUE UNDERWAY' %}
+
+                                <span
+                                    class="badge"
+                                    style="background:#103d69;color:#73bcff;">
+
+                                    🔵 RESCUE UNDERWAY
+
+                                </span>
+
+                            {% else %}
+
+                                <span class="badge badge-new">
+
+                                    🟠 NEW
+
+                                </span>
+
+                            {% endif %}
+
+
+                            <span
+                                id="priority-{{ r['id'] }}"
+                                class="priority priority-loading">
+
+                                AI PRIORITY...
+
+                            </span>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="details">
+
+                        <b>Name:</b>
+                        {{ r['name'] }}
+                        <br>
+
+                        <b>Phone:</b>
+                        {{ r['phone'] }}
+                        <br>
+
+                        <b>People:</b>
+                        {{ r['people'] }}
+                        <br>
+
+                        <b>Medical:</b>
+                        {{ r['medical'] }}
+                        <br>
+
+                        <b>Children:</b>
+                        {{ r['children'] }}
+                        <br>
+
+                        <b>Elderly:</b>
+                        {{ r['elderly'] }}
+                        <br>
+
+                        <b>Situation:</b>
+                        {{ r['situation'] }}
+                        <br>
+
+                        <b>Received:</b>
+                        {{ r['created_at'] }}
+
+
+                        {% if r['latitude'] and r['longitude'] %}
+
+                            <br><br>
+
+                            <b>📍 Location:</b>
+
+                            <a
+                                href="https://www.google.com/maps?q={{ r['latitude'] }},{{ r['longitude'] }}"
+                                target="_blank"
+                                style="color:#65b4ff;">
+
+                                Open in Google Maps
+
+                            </a>
+
+                        {% endif %}
+
+                    </div>
+
+
+                    <!-- NEAREST SHELTER -->
+
+                    <div
+                        class="details"
+                        id="nearest-{{ r['id'] }}">
+
+                        🏠 Finding nearest available shelter...
+
+                    </div>
+
+
+                    <!-- =================================================
+                         WEATHER AT SOS LOCATION
+                         ================================================= -->
+
+                    {% if r['latitude'] and r['longitude'] %}
+
+                    <div
+                        class="weather-card"
+                        id="weather-{{ r['id'] }}">
+
+                        <div class="weather-title">
+
+                            🌦️ WEATHER AT SOS LOCATION
+
+                        </div>
+
+
+                        <div class="weather-grid">
+
+
+                            <div class="weather-item">
+
+                                <small>
+                                    🌡️ Temperature
+                                </small>
+
+                                <b class="weather-temp">
+                                    Loading...
+                                </b>
+
+                            </div>
+
+
+                            <div class="weather-item">
+
+                                <small>
+                                    💧 Humidity
+                                </small>
+
+                                <b class="weather-humidity">
+                                    --
+                                </b>
+
+                            </div>
+
+
+                            <div class="weather-item">
+
+                                <small>
+                                    🌧️ Rain
+                                </small>
+
+                                <b class="weather-rain">
+                                    --
+                                </b>
+
+                            </div>
+
+
+                            <div class="weather-item">
+
+                                <small>
+                                    💨 Wind
+                                </small>
+
+                                <b class="weather-wind">
+                                    --
+                                </b>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="weather-condition">
+
+                            <b>
+                                Condition:
+                            </b>
+
+                            <span class="weather-description">
+                                Loading...
+                            </span>
+
+                            <span class="weather-updated">
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                    {% endif %}
+
+                </div>
+
+            {% endfor %}
+
+
+        {% else %}
+
+            <div class="empty">
+
+                No emergency requests currently recorded.
+
+            </div>
+
+        {% endif %}
+
+    </div>
+
+
+    <div class="footer-note">
+
+        KERASURAKSHA prototype • AI/risk/shelter/weather values
+        shown here are demo or external-data values unless connected
+        to verified official sources.
+
+    </div>
+
+</div>
+
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+
+<script>
+
+    // ============================================================
+    // HELPERS
+    // ============================================================
+
+    function escapeHtml(value) {
+
+        return String(value ?? "")
+            .replaceAll("&", "&amp;")
+            .replaceAll("<", "&lt;")
+            .replaceAll(">", "&gt;")
+            .replaceAll('"', "&quot;")
+            .replaceAll("'", "&#039;");
+
+    }
+
+
+    function priorityClass(level) {
+
+        const x = String(level || "").toUpperCase();
+
+        if (x === "CRITICAL")
+            return "priority-critical";
+
+        if (x === "HIGH")
+            return "priority-high";
+
+        if (x === "MODERATE")
+            return "priority-moderate";
+
+        return "priority-low";
+
+    }
+
+
+    function warningClass(level) {
+
+        const x = String(level || "").toLowerCase();
+
+        if (x === "critical")
+            return "critical";
+
+        if (x === "high")
+            return "high";
+
+        if (x === "moderate")
+            return "moderate";
+
+        return "low";
+
+    }
+
+
+    // ============================================================
+    // AI RISK
+    // ============================================================
+
+    function predictRisk() {
+
+        const rainfall =
+            parseFloat(
+                document.getElementById("rainfall").value
+            );
+
+        const elevation =
+            parseFloat(
+                document.getElementById("elevation").value
+            );
+
+        const slope =
+            parseFloat(
+                document.getElementById("slope").value
+            );
+
+        const riverDistance =
+            parseFloat(
+                document.getElementById("river-distance").value
+            );
+
+        const historicalRisk =
+            parseFloat(
+                document.getElementById("historical-risk").value
+            );
+
+
+        if (
+            [
+                rainfall,
+                elevation,
+                slope,
+                riverDistance,
+                historicalRisk
+            ].some(isNaN)
+        ) {
+
+            showAIError(
+                "Please enter valid values in all fields."
+            );
+
+            return;
+        }
+
+
+        if (
+            historicalRisk < 0 ||
+            historicalRisk > 100
+        ) {
+
+            showAIError(
+                "Historical Risk must be between 0 and 100."
+            );
+
+            return;
+        }
+
+
+        fetch("/api/ai-risk", {
+
+            method: "POST",
+
+            headers: {
+                "Content-Type": "application/json"
+            },
+
+            body: JSON.stringify({
+
+                rainfall_mm:
+                    rainfall,
+
+                elevation_m:
+                    elevation,
+
+                slope_degree:
+                    slope,
+
+                river_distance_km:
+                    riverDistance,
+
+                historical_risk:
+                    historicalRisk
+
+            })
+
+        })
+
+        .then(r => r.json())
+
+        .then(data => {
+
+            if (!data.success) {
+
+                showAIError(
+                    data.error ||
+                    "AI prediction failed."
+                );
+
+                return;
+            }
+
+
+            const result =
+                document.getElementById(
+                    "ai-result"
+                );
+
+            const score =
+                document.getElementById(
+                    "ai-score"
+                );
+
+            const level =
+                document.getElementById(
+                    "ai-level"
+                );
+
+
+            result.style.display = "block";
+
+
+            score.innerText =
+                "Risk Score: " +
+                Number(data.risk_score).toFixed(2);
+
+
+            level.innerText =
+                String(
+                    data.risk_level
+                ).toUpperCase();
+
+
+            level.className =
+                "badge badge-" +
+                String(
+                    data.risk_level
+                ).toLowerCase();
+
+
+            document.getElementById(
+                "ai-error"
+            ).style.display = "none";
+
+        })
+
+        .catch(() => {
+
+            showAIError(
+                "Could not connect to the AI server."
+            );
+
+        });
+
+    }
+
+
+    function showAIError(message) {
+
+        const box =
+            document.getElementById(
+                "ai-error"
+            );
+
+        box.innerText = message;
+
+        box.style.display = "block";
+
+    }
+
+
+    // ============================================================
+    // WARNING ENGINE
+    // ============================================================
+
+    function loadWarnings() {
+
+        fetch("/api/warnings")
+
+        .then(r => r.json())
+
+        .then(data => {
+
+            /*
+             * The backend currently returns a list of district
+             * warnings. We select the highest-risk warning for
+             * the dashboard headline.
+             */
+
+            let warnings = Array.isArray(data)
+                ? data
+                : [];
+
+
+            warnings.sort(
+                (a, b) =>
+                    Number(b.risk_score || 0) -
+                    Number(a.risk_score || 0)
+            );
+
+
+            const highest =
+                warnings.length
+                ? warnings[0]
+                : null;
+
+
+            const level =
+                highest
+                ? highest.risk_level
+                : "Low";
+
+
+            const panel =
+                document.getElementById(
+                    "warning-panel"
+                );
+
+
+            const badge =
+                document.getElementById(
+                    "warning-badge"
+                );
+
+
+            panel.className =
+                "warning " +
+                warningClass(level);
+
+
+            badge.className =
+                "badge badge-" +
+                String(level).toLowerCase();
+
+
+            badge.innerText =
+                String(level).toUpperCase();
+
+
+            document.getElementById(
+                "warning-title"
+            ).innerText =
+                highest
+                ? "⚠️ " +
+                  highest.district +
+                  " — " +
+                  String(level).toUpperCase()
+                : "Current Situation";
+
+
+            document.getElementById(
+                "warning-message"
+            ).innerText =
+                highest
+                ? highest.message
+                : "Monitoring conditions.";
+
+
+            document.getElementById(
+                "warning-rainfall"
+            ).innerText =
+                highest
+                ? "Risk-based monitoring"
+                : "--";
+
+
+            document.getElementById(
+                "warning-risk"
+            ).innerText =
+                highest
+                ? highest.risk_score
+                : "--";
+
+
+            document.getElementById(
+                "warning-situation"
+            ).innerText =
+                highest
+                ? "Monitoring " +
+                  highest.district
+                : "Monitoring";
+
+
+            document.getElementById(
+                "warning-source"
+            ).innerText =
+                "Prototype";
+
+
+            document.getElementById(
+                "warning-count"
+            ).innerText =
+                warnings.filter(
+                    w =>
+                        Number(w.risk_score || 0) >= 60
+                ).length;
+
+        })
+
+        .catch(() => {
+
+            document.getElementById(
+                "warning-title"
+            ).innerText =
+                "⚠️ Warning service unavailable";
+
+
+            document.getElementById(
+                "warning-message"
+            ).innerText =
+                "The backend warning API is not currently connected.";
+
+
+            document.getElementById(
+                "warning-count"
+            ).innerText =
+                "--";
+
+        });
+
+    }
+
+
+    // ============================================================
+    // HAVERSINE
+    // ============================================================
+
+    function haversine(
+        lat1,
+        lon1,
+        lat2,
+        lon2
+    ) {
+
+        const R = 6371;
+
+        const dLat =
+            (lat2 - lat1) *
+            Math.PI / 180;
+
+        const dLon =
+            (lon2 - lon1) *
+            Math.PI / 180;
+
+
+        const a =
+            Math.sin(dLat / 2) ** 2
+            +
+            Math.cos(
+                lat1 * Math.PI / 180
+            )
+            *
+            Math.cos(
+                lat2 * Math.PI / 180
+            )
+            *
+            Math.sin(dLon / 2) ** 2;
+
+
+        return (
+            2 *
+            R *
+            Math.asin(
+                Math.sqrt(a)
+            )
+        );
+
+    }
+
+
+    // ============================================================
+    // AI PRIORITY
+    // ============================================================
+
+    function loadPriorities() {
+
+        fetch("/api/sos")
+
+        .then(r => r.json())
+
+        .then(async requests => {
+
+            let critical = 0;
+
+
+            let riskZones = [];
+
+            try {
+
+                riskZones =
+                    await fetch(
+                        "/api/risk-zones"
+                    ).then(
+                        r => r.json()
+                    );
+
+            } catch (_) {}
+
+
+            for (
+                const sos of requests
+            ) {
+
+                let riskScore = 50;
+
+
+                const lat =
+                    parseFloat(
+                        sos.latitude
+                    );
+
+                const lon =
+                    parseFloat(
+                        sos.longitude
+                    );
+
+
+                if (
+                    !isNaN(lat) &&
+                    !isNaN(lon) &&
+                    riskZones.length
+                ) {
+
+                    let nearest = null;
+
+                    let nearestDistance =
+                        Infinity;
+
+
+                    riskZones.forEach(
+                        zone => {
+
+                            const d =
+                                haversine(
+
+                                    lat,
+                                    lon,
+
+                                    parseFloat(
+                                        zone.latitude
+                                    ),
+
+                                    parseFloat(
+                                        zone.longitude
+                                    )
+
+                                );
+
+
+                            if (
+                                d <
+                                nearestDistance
+                            ) {
+
+                                nearestDistance =
+                                    d;
+
+                                nearest =
+                                    zone;
+
+                            }
+
+                        }
+                    );
+
+
+                    if (nearest) {
+
+                        riskScore =
+                            Number(
+                                nearest.risk_score ||
+                                50
+                            );
+
+                    }
+
+                }
+
+
+                fetch(
+                    "/api/priority",
+                    {
+
+                        method: "POST",
+
+                        headers: {
+                            "Content-Type":
+                                "application/json"
+                        },
+
+                        body:
+                            JSON.stringify({
+
+                                people:
+                                    Number(
+                                        sos.people ||
+                                        0
+                                    ),
+
+                                medical:
+                                    sos.medical ||
+                                    "No",
+
+                                children:
+                                    Number(
+                                        sos.children ||
+                                        0
+                                    ),
+
+                                elderly:
+                                    Number(
+                                        sos.elderly ||
+                                        0
+                                    ),
+
+                                risk_score:
+                                    riskScore,
+
+                                situation:
+                                    sos.situation ||
+                                    ""
+
+                            })
+
+                    }
+                )
+
+                .then(
+                    r => r.json()
+                )
+
+                .then(
+                    result => {
+
+                        const element =
+                            document.getElementById(
+                                "priority-" +
+                                sos.id
+                            );
+
+
+                        if (!element)
+                            return;
+
+
+                        if (
+                            result.success
+                        ) {
+
+                            const priority =
+                                result.priority ||
+                                result.priority_level ||
+                                "LOW";
+
+
+                            element.className =
+                                "priority " +
+                                priorityClass(
+                                    priority
+                                );
+
+
+                            element.innerText =
+                                "AI " +
+                                priority.toUpperCase() +
+                                " • " +
+                                result.priority_score +
+                                "/100";
+
+
+                            if (
+                                priority.toUpperCase()
+                                === "CRITICAL"
+                            ) {
+
+                                critical++;
+
+                                document.getElementById(
+                                    "critical-count"
+                                ).innerText =
+                                    critical;
+
+                            }
+
+                        }
+
+                        else {
+
+                            element.innerText =
+                                "PRIORITY ERROR";
+
+                        }
+
+                    }
+                )
+
+                .catch(() => {
+
+                    const element =
+                        document.getElementById(
+                            "priority-" +
+                            sos.id
+                        );
+
+
+                    if (element) {
+
+                        element.innerText =
+                            "PRIORITY UNAVAILABLE";
+
+                    }
+
+                });
+
+            }
+
+
+            if (!requests.length) {
+
+                document.getElementById(
+                    "critical-count"
+                ).innerText =
+                    "0";
+
+            }
+
+        })
+
+        .catch(() => {
+
+            document.getElementById(
+                "critical-count"
+            ).innerText =
+                "--";
+
+        });
+
+    }
+
+
+    // ============================================================
+    // SHELTERS
+    // ============================================================
+
+    function loadShelters() {
+
+        fetch("/api/shelters")
+
+        .then(r => r.json())
+
+        .then(shelters => {
+
+            const box =
+                document.getElementById(
+                    "shelter-list"
+                );
+
+
+            if (!shelters.length) {
+
+                box.innerHTML =
+                    '<div class="empty">' +
+                    'No shelter records available.' +
+                    '</div>';
+
+                return;
+
+            }
+
+
+            box.innerHTML =
+                shelters.map(
+                    s => {
+
+                        const capacity =
+                            Number(
+                                s.capacity ||
+                                0
+                            );
+
+
+                        const occupied =
+                            Number(
+                                s.occupied ||
+                                0
+                            );
+
+
+                        const available =
+                            Number(
+                                s.available !== undefined
+                                ? s.available
+                                : Math.max(
+                                    capacity -
+                                    occupied,
+                                    0
+                                )
+                            );
+
+
+                        const percent =
+                            capacity
+                            ? Math.min(
+                                (
+                                    occupied /
+                                    capacity
+                                ) * 100,
+                                100
+                            )
+                            : 0;
+
+
+                        const full =
+                            available <= 0 ||
+                            String(
+                                s.status
+                            ).toUpperCase()
+                            === "FULL";
+
+
+                        return `
+
+                            <div class="shelter">
+
+                                <div class="card-head">
+
+                                    <div class="card-title">
+
+                                        🏠
+                                        ${escapeHtml(
+                                            s.name
+                                        )}
+
+                                    </div>
+
+                                    <span class="badge ${
+                                        full
+                                        ? "badge-critical"
+                                        : "badge-low"
+                                    }">
+
+                                        ${
+                                            full
+                                            ? "FULL"
+                                            : "OPEN"
+                                        }
+
+                                    </span>
+
+                                </div>
+
+
+                                <div class="details">
+
+                                    <b>District:</b>
+                                    ${escapeHtml(
+                                        s.district
+                                    )}
+                                    <br>
+
+                                    <b>Capacity:</b>
+                                    ${capacity}
+                                    <br>
+
+                                    <b>Occupied:</b>
+                                    ${occupied}
+                                    <br>
+
+                                    <b>Available:</b>
+                                    ${available}
+
+                                </div>
+
+
+                                <div class="capacity-bar">
+
+                                    <div
+                                        class="capacity-fill"
+                                        style="width:${percent}%">
+                                    </div>
+
+                                </div>
+
+
+                                <div class="actions">
+
+                                    <a
+                                        class="small-btn primary"
+                                        target="_blank"
+                                        href="https://www.google.com/maps?q=${
+                                            encodeURIComponent(
+                                                s.latitude
+                                            )
+                                        },${
+                                            encodeURIComponent(
+                                                s.longitude
+                                            )
+                                        }">
+
+                                        📍 Directions
+
+                                    </a>
+
+                                </div>
+
+                            </div>
+
+                        `;
+
+                    }
+                ).join("");
+
+        })
+
+        .catch(() => {
+
+            document.getElementById(
+                "shelter-list"
+            ).innerHTML =
+                '<div class="empty">' +
+                'Shelter API is not connected yet.' +
+                '</div>';
+
+        });
+
+    }
+
+
+    // ============================================================
+    // RESCUE TEAMS
+    // ============================================================
+
+    function loadTeams() {
+
+        fetch("/api/rescue-teams")
+
+        .then(r => r.json())
+
+        .then(teams => {
+
+            const box =
+                document.getElementById(
+                    "team-list"
+                );
+
+
+            if (!teams.length) {
+
+                box.innerHTML =
+                    '<div class="empty">' +
+                    'No rescue teams available.' +
+                    '</div>';
+
+                return;
+
+            }
+
+
+            box.innerHTML =
+                teams.map(
+                    team => {
+
+                        const available =
+                            String(
+                                team.status ||
+                                ""
+                            ).toUpperCase()
+                            === "AVAILABLE";
+
+
+                        return `
+
+                            <div class="team">
+
+                                <div class="card-head">
+
+                                    <div class="card-title">
+
+                                        🚑
+                                        ${escapeHtml(
+                                            team.name
+                                        )}
+
+                                    </div>
+
+
+                                    <span
+                                        class="badge ${
+                                            available
+                                            ? "badge-low"
+                                            : "badge-underway"
+                                        }">
+
+                                        ${escapeHtml(
+                                            team.status ||
+                                            "UNKNOWN"
+                                        )}
+
+                                    </span>
+
+                                </div>
+
+
+                                <div class="details">
+
+                                    <b>District:</b>
+                                    ${escapeHtml(
+                                        team.district ||
+                                        "Unknown"
+                                    )}
+                                    <br>
+
+                                    <b>Members:</b>
+                                    ${escapeHtml(
+                                        team.members ??
+                                        "--"
+                                    )}
+                                    <br>
+
+                                    <b>Vehicle:</b>
+                                    ${escapeHtml(
+                                        team.vehicle ||
+                                        "--"
+                                    )}
+                                    <br>
+
+                                    <b>Assignment:</b>
+                                    ${escapeHtml(
+                                        team.assignment ||
+                                        "None"
+                                    )}
+
+                                </div>
+
+                            </div>
+
+                        `;
+
+                    }
+                ).join("");
+
+        })
+
+        .catch(() => {
+
+            document.getElementById(
+                "team-list"
+            ).innerHTML =
+                '<div class="empty">' +
+                'Rescue-team API is not connected yet.' +
+                '</div>';
+
+        });
+
+    }
+
+
+    // ============================================================
+    // NEAREST SHELTER
+    // ============================================================
+
+    function loadNearestShelters() {
+
+        fetch("/api/sos")
+
+        .then(r => r.json())
+
+        .then(requests => {
+
+            requests.forEach(
+                sos => {
+
+                    const box =
+                        document.getElementById(
+                            "nearest-" +
+                            sos.id
+                        );
+
+
+                    if (!box)
+                        return;
+
+
+                    const lat =
+                        parseFloat(
+                            sos.latitude
+                        );
+
+                    const lon =
+                        parseFloat(
+                            sos.longitude
+                        );
+
+
+                    if (
+                        isNaN(lat) ||
+                        isNaN(lon)
+                    ) {
+
+                        box.innerText =
+                            "🏠 Shelter search unavailable because GPS coordinates are missing.";
+
+                        return;
+
+                    }
+
+
+                    fetch(
+                        "/api/nearest-shelter",
+                        {
+
+                            method: "POST",
+
+                            headers: {
+                                "Content-Type":
+                                    "application/json"
+                            },
+
+                            body:
+                                JSON.stringify({
+
+                                    latitude:
+                                        lat,
+
+                                    longitude:
+                                        lon
+
+                                })
+
+                        }
+                    )
+
+                    .then(r => r.json())
+
+                    .then(data => {
+
+                        if (
+                            !data.success ||
+                            !data.found
+                        ) {
+
+                            box.innerText =
+                                "🏠 No available shelter found.";
+
+                            return;
+
+                        }
+
+
+                        const shelter =
+                            data.shelter;
+
+
+                        box.innerHTML =
+
+                            "🏠 <b>Nearest Available Shelter:</b> " +
+
+                            escapeHtml(
+                                shelter.name
+                            ) +
+
+                            " • " +
+
+                            escapeHtml(
+                                shelter.distance_km
+                            ) +
+
+                            " km away" +
+
+                            "<br>" +
+
+                            "<span style='color:#91a4bb'>" +
+
+                            "Available spaces: " +
+
+                            escapeHtml(
+                                shelter.available
+                            ) +
+
+                            "</span>" +
+
+                            "<br>" +
+
+                            "<a class='small-btn primary' " +
+
+                            "target='_blank' " +
+
+                            "href='https://www.google.com/maps/dir/?api=1&destination=" +
+
+                            encodeURIComponent(
+                                shelter.latitude
+                            ) +
+
+                            "," +
+
+                            encodeURIComponent(
+                                shelter.longitude
+                            ) +
+
+                            "'>" +
+
+                            "📍 Get Directions" +
+
+                            "</a>";
+
+                    })
+
+                    .catch(() => {
+
+                        box.innerText =
+                            "🏠 Shelter service unavailable.";
+
+                    });
+
+                }
+            );
+
+        })
+
+        .catch(() => {});
+
+    }
+
+
+    // ============================================================
+    // SOS LOCATION WEATHER
+    // ============================================================
+
+    function loadSOSWeather() {
+
+        fetch("/api/sos")
+
+        .then(r => r.json())
+
+        .then(requests => {
+
+            requests.forEach(
+                sos => {
+
+                    const box =
+                        document.getElementById(
+                            "weather-" +
+                            sos.id
+                        );
+
+
+                    if (!box)
+                        return;
+
+
+                    const lat =
+                        parseFloat(
+                            sos.latitude
+                        );
+
+                    const lon =
+                        parseFloat(
+                            sos.longitude
+                        );
+
+
+                    if (
+                        isNaN(lat) ||
+                        isNaN(lon)
+                    ) {
+
+                        box.querySelector(
+                            ".weather-description"
+                        ).innerText =
+                            "GPS location unavailable";
+
+                        return;
+
+                    }
+
+
+                    fetch(
+                        "/api/weather?latitude=" +
+                        encodeURIComponent(lat) +
+                        "&longitude=" +
+                        encodeURIComponent(lon)
+                    )
+
+                    .then(r => r.json())
+
+                    .then(data => {
+
+                        if (!data.success) {
+
+                            throw new Error(
+                                data.error ||
+                                "Weather unavailable"
+                            );
+
+                        }
+
+
+                        box.querySelector(
+                            ".weather-temp"
+                        ).innerText =
+                            data.temperature_c +
+                            " °C";
+
+
+                        box.querySelector(
+                            ".weather-humidity"
+                        ).innerText =
+                            data.humidity_percent +
+                            " %";
+
+
+                        box.querySelector(
+                            ".weather-rain"
+                        ).innerText =
+                            data.rain_mm +
+                            " mm";
+
+
+                        box.querySelector(
+                            ".weather-wind"
+                        ).innerText =
+                            data.wind_kmh +
+                            " km/h";
+
+
+                        box.querySelector(
+                            ".weather-description"
+                        ).innerText =
+                            data.condition;
+
+
+                        box.querySelector(
+                            ".weather-updated"
+                        ).innerText =
+                            " • Updated " +
+                            data.updated_at;
+
+                    })
+
+                    .catch(() => {
+
+                        box.querySelector(
+                            ".weather-temp"
+                        ).innerText =
+                            "--";
+
+
+                        box.querySelector(
+                            ".weather-humidity"
+                        ).innerText =
+                            "--";
+
+
+                        box.querySelector(
+                            ".weather-rain"
+                        ).innerText =
+                            "--";
+
+
+                        box.querySelector(
+                            ".weather-wind"
+                        ).innerText =
+                            "--";
+
+
+                        box.querySelector(
+                            ".weather-description"
+                        ).innerText =
+                            "Weather service unavailable";
+
+                    });
+
+                }
+            );
+
+        })
+
+        .catch(() => {});
+
+    }
+
+
+    // ============================================================
+    // MAP
+    // ============================================================
+
+    const map =
+        L.map(
+            "kerala-map"
+        ).setView(
+            [10.1632, 76.6413],
+            7
+        );
+
+
+    L.tileLayer(
+
+        "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+
+        {
+
+            maxZoom: 19,
+
+            attribution:
+                "&copy; OpenStreetMap contributors"
+
+        }
+
+    ).addTo(map);
+
+
+    const validLocations = [];
+
+
+    function createSOSMarker(sos) {
+
+        const lat =
+            parseFloat(
+                sos.latitude
+            );
+
+        const lon =
+            parseFloat(
+                sos.longitude
+            );
+
+
+        if (
+            isNaN(lat) ||
+            isNaN(lon)
+        )
+            return null;
+
+
+        let color =
+            "#ff9d00";
+
+
+        let status =
+            "🟠 NEW";
+
+
+        if (
+            sos.status ===
+            "RESCUE UNDERWAY"
+        ) {
+
+            color =
+                "#1687ff";
+
+            status =
+                "🔵 RESCUE UNDERWAY";
+
+        }
+
+
+        if (
+            sos.status ===
+            "RESOLVED"
+        ) {
+
+            color =
+                "#20c76b";
+
+            status =
+                "🟢 RESOLVED";
+
+        }
+
+
+        const marker =
+            L.circleMarker(
+                [lat, lon],
+                {
+
+                    radius: 11,
+
+                    fillColor:
+                        color,
+
+                    color:
+                        "#fff",
+
+                    weight: 2,
+
+                    opacity: 1,
+
+                    fillOpacity: 0.9
+
+                }
+            ).addTo(map);
+
+
+        marker.bindPopup(
+
+            "<b>🆘 SOS EMERGENCY</b><br><br>" +
+
+            "<b>Status:</b> " +
+            escapeHtml(status) +
+            "<br>" +
+
+            "<b>Request:</b> #" +
+            escapeHtml(sos.id) +
+            "<br>" +
+
+            "<b>Name:</b> " +
+            escapeHtml(sos.name) +
+            "<br>" +
+
+            "<b>People:</b> " +
+            escapeHtml(sos.people) +
+            "<br>" +
+
+            "<b>Medical:</b> " +
+            escapeHtml(sos.medical) +
+            "<br>" +
+
+            "<b>Children:</b> " +
+            escapeHtml(sos.children) +
+            "<br>" +
+
+            "<b>Elderly:</b> " +
+            escapeHtml(sos.elderly) +
+            "<br>" +
+
+            "<b>Situation:</b> " +
+            escapeHtml(sos.situation)
+
+        );
+
+
+        validLocations.push(
+            [lat, lon]
+        );
+
+
+        return marker;
+
+    }
+
+
+    fetch("/api/sos")
+
+    .then(r => r.json())
+
+    .then(data => {
+
+        data.forEach(
+            createSOSMarker
+        );
+
+
+        if (
+            validLocations.length
+        ) {
+
+            map.fitBounds(
+                L.latLngBounds(
+                    validLocations
+                ),
+                {
+                    padding:
+                        [40, 40]
+                }
+            );
+
+        }
+
+    })
+
+    .catch(
+        error =>
+            console.error(
+                "Could not load SOS:",
+                error
+            )
+    );
+
+
+    fetch("/api/risk-zones")
+
+    .then(r => r.json())
+
+    .then(zones => {
+
+        zones.forEach(
+            zone => {
+
+                let color =
+                    "#20c76b";
+
+
+                if (
+                    zone.risk_level ===
+                    "Moderate"
+                )
+                    color =
+                        "#ffd21f";
+
+
+                if (
+                    zone.risk_level ===
+                    "High"
+                )
+                    color =
+                        "#ff8c00";
+
+
+                if (
+                    zone.risk_level ===
+                    "Critical"
+                )
+                    color =
+                        "#ff3030";
+
+
+                const marker =
+                    L.circleMarker(
+
+                        [
+                            zone.latitude,
+                            zone.longitude
+                        ],
+
+                        {
+
+                            radius: 8,
+
+                            fillColor:
+                                color,
+
+                            color:
+                                "#fff",
+
+                            weight: 1,
+
+                            fillOpacity:
+                                0.55
+
+                        }
+
+                    ).addTo(map);
+
+
+                marker.bindPopup(
+
+                    "<b>⚠️ DISASTER RISK ZONE</b><br><br>" +
+
+                    "<b>District:</b> " +
+                    escapeHtml(
+                        zone.district
+                    ) +
+                    "<br>" +
+
+                    "<b>Risk Level:</b> " +
+                    escapeHtml(
+                        zone.risk_level
+                    ) +
+                    "<br>" +
+
+                    "<b>Risk Score:</b> " +
+                    escapeHtml(
+                        zone.risk_score
+                    )
+
+                );
+
+            }
+        );
+
+    })
+
+    .catch(
+        error =>
+            console.error(
+                "Could not load risk zones:",
+                error
+            )
+    );
+
+
+    // ============================================================
+    // START ALL MODULES
+    // ============================================================
+
+    loadWarnings();
+
+    loadShelters();
+
+    loadTeams();
+
+    loadPriorities();
+
+    loadNearestShelters();
+
+    loadSOSWeather();
+
+
+    // Refresh operational panels.
+
+    setInterval(
+        loadWarnings,
+        30000
+    );
+
+
+    setInterval(
+        loadShelters,
+        60000
+    );
+
+
+    setInterval(
+        loadTeams,
+        60000
+    );
+
+
+    setInterval(
+        loadPriorities,
+        60000
+    );
+
+
+    setInterval(
+        loadNearestShelters,
+        60000
+    );
+
+
+    setInterval(
+        loadSOSWeather,
+        60000
+    );
+
+</script>
+
+</body>
+</html>
